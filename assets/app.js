@@ -788,6 +788,429 @@ function renderFilterableTable(tableId, columns, rows) {
   return `<div class="table-wrap"><table class="table">${headerRow}${filterRow}${bodyRows}</table></div>`;
 }
 
+function currentPage() {
+  return document.getElementById("app")?.dataset.page || "dashboard";
+}
+
+function renderToolbar() {
+  return `
+    <section class="panel">
+      <div class="toolbar">
+        <div class="control">
+          <label>Период</label>
+          <div class="segmented" id="preset-buttons">
+            <button data-preset="7">7 дней</button>
+            <button data-preset="14">14 дней</button>
+            <button data-preset="30">30 дней</button>
+            <button data-preset="all">Весь период</button>
+          </div>
+        </div>
+        <div class="control">
+          <label>Группировка</label>
+          <select id="group-select">
+            <option value="day">По дням</option>
+            <option value="week">По неделям</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Метрика</label>
+          <select id="metric-select">
+            <option value="revenue">Выручка</option>
+            <option value="gross">Валовая прибыль</option>
+            <option value="qty">Продано, шт</option>
+            <option value="net">Итог дня</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Категория</label>
+          <select id="category-select">
+            <option value="all">Все категории</option>
+            ${categoryList().map((category) => `<option value="${category}">${category}</option>`).join("")}
+          </select>
+        </div>
+        <div class="control">
+          <label>С</label>
+          <input type="date" id="start-date" value="${state.start}">
+        </div>
+        <div class="control">
+          <label>По</label>
+          <input type="date" id="end-date" value="${state.end}">
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderSummary(summary, deep, rangeChange) {
+  return `
+    <section class="summary">
+      <article class="card"><span>Выручка периода</span><strong>${formatMoney(summary.revenue)}</strong><span>${rangeChange === null ? "без сравнения" : `${formatPct(rangeChange)} к предыдущей точке`}</span></article>
+      <article class="card"><span>Валовая прибыль</span><strong>${formatMoney(summary.gross)}</strong><span>маржа ${formatPct(summary.margin)}</span></article>
+      <article class="card"><span>Продано порций</span><strong>${formatNumber(summary.qty)}</strong><span>средний чек ${formatMoney(summary.avgCheck)}</span></article>
+      <article class="card"><span>Итог периода</span><strong class="${summary.net < 0 ? "bad" : "good"}">${formatMoney(summary.net)}</strong><span>${state.category === "all" ? `ЗП фонд ${formatMoney(summary.payroll)}` : "без распределения общей зарплаты"}</span></article>
+      <article class="card"><span>Средняя выручка дня</span><strong>${formatMoney(deep.avgRevenue)}</strong><span>волатильность ${formatPct(deep.volatility)}</span></article>
+    </section>
+  `;
+}
+
+function renderPageLead(title, text, pills = []) {
+  return `
+    <section class="panel page-lead">
+      <div class="panel-head">
+        <div>
+          <h2>${title}</h2>
+          <p>${text}</p>
+        </div>
+      </div>
+      ${pills.length ? `<div class="pill-row">${pills.map((pill) => `<span class="pill">${pill}</span>`).join("")}</div>` : ""}
+    </section>
+  `;
+}
+
+function renderMetricStrip(items) {
+  return `
+    <section class="metric-cards">
+      ${items.map((item) => `
+        <article class="metric-card">
+          <span>${item.label}</span>
+          <strong class="${item.tone || ""}">${item.value}</strong>
+          <span class="sub">${item.sub}</span>
+        </article>
+      `).join("")}
+    </section>
+  `;
+}
+
+function renderRiskCards(items, type = "risk") {
+  const adviceKey = type === "advice" ? "" : type === "anomaly" ? "detail" : "advice";
+  const badge = type === "advice" ? "ACTION" : null;
+  return `<div class="risk-grid">
+    ${items.map((item) => `
+      <article class="risk ${type === "advice" ? "ok" : item.level}">
+        <span>${badge || item.level.toUpperCase()}</span>
+        <h2>${item.title}</h2>
+        <p>${item.text}</p>
+        ${adviceKey && item[adviceKey] ? `<p class="advice">${item[adviceKey]}</p>` : ""}
+      </article>
+    `).join("")}
+  </div>`;
+}
+
+function renderTopProductBars(products, summary, limit = 8) {
+  const list = products.slice(0, limit);
+  if (!list.length) return `<div class="bars"></div>`;
+  const max = list[0].revenue || 1;
+  return `<div class="bars">${list.map((item) => `
+    <div class="bar-row">
+      <div class="bar-label"><span>${item.name}</span><strong>${formatMoney(item.revenue)}</strong></div>
+      <div class="bar-track"><div class="bar-fill alt" style="width:${(item.revenue / max) * 100}%"></div></div>
+      <span class="muted">${item.category} · доля ${formatPct((item.revenue / Math.max(summary.revenue, 1)) * 100)} · маржа ${formatPct(item.margin)}</span>
+    </div>
+  `).join("")}</div>`;
+}
+
+function buildAbcRows(products, summary) {
+  let cumulative = 0;
+  return products.map((item, index) => {
+    const share = summary.revenue > 0 ? (item.revenue / summary.revenue) * 100 : 0;
+    cumulative += share;
+    const abcClass = cumulative <= 80 ? "A" : cumulative <= 95 ? "B" : "C";
+    return {
+      ...item,
+      rank: index + 1,
+      share,
+      cumulative,
+      abcClass
+    };
+  });
+}
+
+function buildAbcClassSummary(abcRows) {
+  return ["A", "B", "C"].map((abcClass) => {
+    const rows = abcRows.filter((item) => item.abcClass === abcClass);
+    const revenue = rows.reduce((sum, item) => sum + item.revenue, 0);
+    const gross = rows.reduce((sum, item) => sum + item.gross, 0);
+    const qty = rows.reduce((sum, item) => sum + item.qty, 0);
+    return {
+      abcClass,
+      items: rows.length,
+      revenue,
+      gross,
+      qty,
+      margin: revenue > 0 ? (gross / revenue) * 100 : 0
+    };
+  });
+}
+
+function buildAbcNarrative(abcRows, abcClasses) {
+  const aClass = abcClasses.find((item) => item.abcClass === "A");
+  const bClass = abcClasses.find((item) => item.abcClass === "B");
+  const cClass = abcClasses.find((item) => item.abcClass === "C");
+  const weakA = abcRows.filter((item) => item.abcClass === "A" && item.margin < 55).slice(0, 3);
+  const strongC = abcRows.filter((item) => item.abcClass === "C" && item.margin > 65).slice(0, 3);
+  const findings = [];
+  if (aClass) {
+    findings.push({
+      label: "Класс A",
+      value: `${aClass.items} поз.`,
+      sub: `Основное ядро продаж. Дает ${formatMoney(aClass.revenue)} выручки при марже ${formatPct(aClass.margin)}.`
+    });
+  }
+  if (weakA.length) {
+    findings.push({
+      label: "Слабые A-позиции",
+      value: weakA[0].name,
+      sub: `${weakA.map((item) => `${item.name} (${formatPct(item.margin)})`).join(" · ")}. Их нужно защищать ценой, рецептурой и списаниями.`
+    });
+  }
+  if (strongC.length) {
+    findings.push({
+      label: "Скрытый резерв C",
+      value: strongC[0].name,
+      sub: `${strongC.map((item) => `${item.name} (${formatPct(item.margin)})`).join(" · ")}. Есть смысл тестировать их в витрине и апсейле.`
+    });
+  }
+  const advice = [];
+  if (aClass && aClass.margin < 58) {
+    advice.push({
+      title: "Поднять качество класса A",
+      text: "Товары в A уже формируют кассу, но их экономика просит внимания.",
+      detail: "Проверьте цену, нормы закладки, скидки и списания именно по лидерам. Даже небольшой рост маржи в A заметнее, чем оптимизация редких позиций."
+    });
+  }
+  if (bClass && cClass && cClass.items > bClass.items * 1.5) {
+    advice.push({
+      title: "Сократить шум в хвосте",
+      text: "Хвост ассортимента слишком широкий относительно среднего слоя.",
+      detail: "Часть C-позиций можно оставить сезонными или вынести из постоянного фокуса, чтобы смена и гости легче считывали сильное меню."
+    });
+  }
+  if (strongC.length) {
+    advice.push({
+      title: "Продвигать сильные C-позиции",
+      text: "В хвосте есть товары с хорошей маржой, которые пока недобирают спрос.",
+      detail: `Попробуйте поднять видимость ${strongC.map((item) => item.name).join(", ")} в меню, витрине и устных рекомендациях кассира.`
+    });
+  }
+  return { findings, advice };
+}
+
+function renderCategoriesPage(ctx) {
+  const topCategory = ctx.categories[0];
+  const weakCategory = [...ctx.categories].sort((a, b) => a.margin - b.margin).find((item) => item.revenue > ctx.summary.revenue * 0.05);
+  return `
+    ${renderPageLead("Категории под лупой", "Здесь удобно смотреть, какие направления меню реально несут выручку, где проседает маржа и как меняется структура периода.", ctx.pills)}
+    ${renderToolbar()}
+    ${renderSummary(ctx.summary, ctx.deep, ctx.rangeChange)}
+    ${renderMetricStrip([
+      { label: "Лидер категории", value: topCategory ? topCategory.category : "—", sub: topCategory ? `${formatMoney(topCategory.revenue)} · маржа ${formatPct(topCategory.margin)}` : "Нет данных." },
+      { label: "Самая слабая маржа", value: weakCategory ? weakCategory.category : "—", sub: weakCategory ? `${formatPct(weakCategory.margin)} при выручке ${formatMoney(weakCategory.revenue)}` : "Нет слабых крупных категорий." },
+      { label: "Концентрация кассы", value: formatPct(ctx.deep.concentration), sub: "Доля крупнейшей категории в выручке периода." },
+      { label: "Категорий в работе", value: formatNumber(ctx.categories.length), sub: "Фильтруйте таблицу ниже по названию, выручке и марже." }
+    ])}
+    <section class="grid equal">
+      <article class="panel">
+        <div class="panel-head"><div><h3>Структура выручки</h3><p>Сразу видно, какие категории тянут кассу сильнее остальных.</p></div></div>
+        ${barChart(ctx.categories)}
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div><h3>Вывод по категориям</h3><p>Короткий управленческий смысл по текущему срезу.</p></div></div>
+        ${renderRiskCards([
+          topCategory ? { level: "ok", title: `Ядро выручки — ${topCategory.category}`, text: `${topCategory.category} дает ${formatPct((topCategory.revenue / Math.max(ctx.summary.revenue, 1)) * 100)} выручки периода.`, advice: "Это опорная категория. По ней особенно важно не терять наличие, скорость выдачи и понятную подачу." } : null,
+          weakCategory ? { level: "warning", title: `Проверить экономику ${weakCategory.category}`, text: `Маржа категории ${formatPct(weakCategory.margin)} при заметной выручке ${formatMoney(weakCategory.revenue)}.`, advice: "Разберите себестоимость, скидки и списания. Если категория объемная, даже небольшая просадка в марже ощутимо режет итог." } : null,
+          { level: "ok", title: "Фильтры по колонкам уже включены", text: "Можно быстро находить категории с нужной маржой, объемом или выручкой прямо в таблице.", advice: "Например: введите `<50` в колонке маржи или `>50000` в выручке." }
+        ].filter(Boolean))}
+      </article>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><h3>Таблица категорий</h3><p>Фильтры и сортировка работают в каждом столбце.</p></div></div>
+      ${renderFilterableTable("categories-page", [
+        { key: "category", label: "Категория", render: (item) => `${item.category}<small>Доля ${formatPct((item.revenue / Math.max(ctx.summary.revenue, 1)) * 100)}</small>`, sortValue: (item) => item.category },
+        { key: "revenue", label: "Выручка", type: "number", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}`, numericValue: (item) => item.revenue },
+        { key: "qty", label: "Шт", type: "number", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}`, numericValue: (item) => item.qty },
+        { key: "gross", label: "Вал", type: "number", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}`, numericValue: (item) => item.gross },
+        { key: "margin", label: "Маржа", type: "number", render: (item) => formatPct(item.margin), filterValue: (item) => `${item.margin} ${formatPct(item.margin)}`, numericValue: (item) => item.margin }
+      ], ctx.categories)}
+    </section>
+  `;
+}
+
+function renderProductsPage(ctx) {
+  const topProduct = ctx.products[0];
+  const weakLarge = ctx.products.find((item) => item.revenue > ctx.summary.revenue * 0.02 && item.margin < 30);
+  return `
+    ${renderPageLead("Ассортимент и деньги", "Страница показывает, какие товары формируют кассу, где сильная валовая модель, а где позиции тянут оборот, но съедают маржу.", ctx.pills)}
+    ${renderToolbar()}
+    ${renderSummary(ctx.summary, ctx.deep, ctx.rangeChange)}
+    ${renderMetricStrip([
+      { label: "Товар-лидер", value: topProduct ? topProduct.name : "—", sub: topProduct ? `${formatMoney(topProduct.revenue)} · ${formatPct(topProduct.margin)}` : "Нет данных." },
+      { label: "Всего SKU", value: formatNumber(ctx.products.length), sub: "Полный список ниже можно фильтровать по названию, категории, выручке и марже." },
+      { label: "Слабая крупная позиция", value: weakLarge ? weakLarge.name : "—", sub: weakLarge ? `${formatPct(weakLarge.margin)} при выручке ${formatMoney(weakLarge.revenue)}` : "Крупных просевших позиций не найдено." },
+      { label: "Лучшие по марже", value: ctx.deep.marginLeaders[0]?.name ?? "—", sub: ctx.deep.marginLeaders.map((item) => `${item.name} (${formatPct(item.margin)})`).join(" · ") || "Нет данных." }
+    ])}
+    <section class="grid equal">
+      <article class="panel">
+        <div class="panel-head"><div><h3>Лидеры ассортимента</h3><p>Топ товаров по выручке с долей в периоде.</p></div></div>
+        ${renderTopProductBars(ctx.products, ctx.summary, 10)}
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div><h3>Что делать по ассортименту</h3><p>Короткие подсказки прямо по текущим данным.</p></div></div>
+        ${renderRiskCards([
+          topProduct ? { level: "ok", title: `Не терять наличие ${topProduct.name}`, text: `Это лидер периода с выручкой ${formatMoney(topProduct.revenue)}.`, advice: "Проверьте, чтобы товар был понятен в меню, у кассира и в запасе ингредиентов." } : null,
+          weakLarge ? { level: "warning", title: `Пересмотреть ${weakLarge.name}`, text: `Позиция продается, но маржа всего ${formatPct(weakLarge.margin)}.`, advice: "Посмотрите цену, порцию, себестоимость и скидки. Это быстрый рычаг для роста итога дня." } : null,
+          ctx.deep.weakProducts[0] ? { level: "warning", title: "Есть слабые по марже товары", text: ctx.deep.weakProducts.map((item) => `${item.name} (${formatPct(item.margin)})`).join(" · "), advice: "Их не обязательно сразу убирать, но точно стоит проверить причину слабой экономики." } : null
+        ].filter(Boolean))}
+      </article>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><h3>Таблица товаров</h3><p>Здесь уже можно искать любые позиции и быстро отбирать слабые по марже или сильные по выручке.</p></div></div>
+      ${renderFilterableTable("products-page", [
+        { key: "name", label: "Товар", render: (item) => `${item.name}<small>${item.category}</small>`, sortValue: (item) => item.name },
+        { key: "category", label: "Категория", render: (item) => item.category, sortValue: (item) => item.category },
+        { key: "revenue", label: "Выручка", type: "number", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}`, numericValue: (item) => item.revenue },
+        { key: "qty", label: "Шт", type: "number", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}`, numericValue: (item) => item.qty },
+        { key: "gross", label: "Вал", type: "number", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}`, numericValue: (item) => item.gross },
+        { key: "margin", label: "Маржа", type: "number", render: (item) => `<span class="${item.margin < 30 ? "bad" : item.margin > 60 ? "good" : ""}">${formatPct(item.margin)}</span>`, filterValue: (item) => `${item.margin} ${formatPct(item.margin)}`, numericValue: (item) => item.margin }
+      ], ctx.products)}
+    </section>
+  `;
+}
+
+function renderDaysPage(ctx) {
+  const groupedRowsForPage = ctx.grouped.slice().reverse();
+  return `
+    ${renderPageLead("Дни, недели и динамика", "Эта страница нужна для чтения ритма бизнеса: где был пик, где просадка, как вел себя итог дня и в какие даты стоит идти в разбор.", ctx.pills)}
+    ${renderToolbar()}
+    ${renderSummary(ctx.summary, ctx.deep, ctx.rangeChange)}
+    <section class="grid">
+      <article class="panel">
+        <div class="panel-head"><div><h3>${metricTitle()} в динамике</h3><p>Наводите курсор на график, чтобы увидеть точные значения.</p></div></div>
+        ${lineChart(ctx.grouped)}
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div><h3>Аномалии периода</h3><p>Всплески и провалы, которые требуют разборов по смене или по меню.</p></div></div>
+        ${renderRiskCards(ctx.anomalyItems, "anomaly")}
+      </article>
+    </section>
+    <section class="grid equal">
+      <article class="panel">
+        <div class="panel-head"><div><h3>Маржа и итог</h3><p>Линия показывает маржу, столбцы — итог дня или недели.</p></div></div>
+        ${dualMetricChart(ctx.grouped)}
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div><h3>Ритм недели</h3><p>Средние значения по каждому дню недели для планирования смен и промо.</p></div></div>
+        ${weekdayChart(ctx.weekdays)}
+      </article>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><h3>${state.group === "day" ? "Дневная" : "Недельная"} таблица</h3><p>Фильтруйте даты, выручку, маржу и итог прямо в колонках.</p></div></div>
+      ${renderFilterableTable("days-page", [
+        { key: "label", label: state.group === "day" ? "День" : "Неделя", render: (item) => item.label, sortValue: (item) => item.label },
+        { key: "revenue", label: "Выручка", type: "number", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}`, numericValue: (item) => item.revenue },
+        { key: "qty", label: "Шт", type: "number", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}`, numericValue: (item) => item.qty },
+        { key: "gross", label: "Вал", type: "number", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}`, numericValue: (item) => item.gross },
+        { key: "margin", label: "Маржа", type: "number", render: (item) => formatPct(item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0), filterValue: (item) => `${item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0}`, numericValue: (item) => item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0 },
+        { key: "net", label: "Итог", type: "number", render: (item) => `<span class="${item.net < 0 ? "bad" : "good"}">${formatMoney(item.net)}</span>`, filterValue: (item) => `${item.net} ${formatMoney(item.net)}`, numericValue: (item) => item.net }
+      ], groupedRowsForPage)}
+    </section>
+  `;
+}
+
+function renderRisksPage(ctx) {
+  const riskRows = [
+    ...ctx.riskItems.map((item) => ({ kind: "Риск", level: item.level, title: item.title, text: item.text, action: item.advice })),
+    ...ctx.anomalyItems.map((item) => ({ kind: "Аномалия", level: item.level, title: item.title, text: item.text, action: item.detail })),
+    ...ctx.adviceItems.map((item) => ({ kind: "Совет", level: "ok", title: item.title, text: item.text, action: "Сфокусируйте команду на этом действии в ближайшем цикле." }))
+  ];
+  const criticalCount = riskRows.filter((item) => item.level === "critical").length;
+  const warningCount = riskRows.filter((item) => item.level === "warning").length;
+  return `
+    ${renderPageLead("Риски, аномалии и действия", "Здесь собраны сигналы, которые требуют внимания: операционные риски, нетипичные дни и конкретные управленческие шаги.", ctx.pills)}
+    ${renderToolbar()}
+    ${renderMetricStrip([
+      { label: "Критичных сигналов", value: formatNumber(criticalCount), sub: "Это точки, которые уже заметно режут итог периода." },
+      { label: "Предупреждений", value: formatNumber(warningCount), sub: "Важно разобрать, но они еще управляемы." },
+      { label: "Рабочих действий", value: formatNumber(ctx.adviceItems.length), sub: "Короткий список, на что команде смотреть в первую очередь." },
+      { label: "Минусовых дней", value: formatNumber(ctx.deep.lossDays), sub: `Из ${ctx.days.length} дней периода.` }
+    ])}
+    <section class="grid equal">
+      <article class="panel">
+        <div class="panel-head"><div><h3>Карточки рисков</h3><p>Быстрый экран для руководителя.</p></div></div>
+        ${renderRiskCards(ctx.riskItems)}
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div><h3>Карточки действий</h3><p>Что делать после чтения цифр.</p></div></div>
+        ${renderRiskCards(ctx.adviceItems, "advice")}
+      </article>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><h3>Журнал сигналов</h3><p>Таблица удобна для поиска только рисков, только аномалий или конкретных тем по словам.</p></div></div>
+      ${renderFilterableTable("risks-page", [
+        { key: "kind", label: "Тип", render: (item) => item.kind, sortValue: (item) => item.kind },
+        { key: "level", label: "Приоритет", render: (item) => item.level.toUpperCase(), sortValue: (item) => item.level },
+        { key: "title", label: "Заголовок", render: (item) => `${item.title}<small>${item.text}</small>`, sortValue: (item) => item.title, filterValue: (item) => `${item.title} ${item.text}` },
+        { key: "action", label: "Действие", render: (item) => item.action, sortValue: (item) => item.action }
+      ], riskRows)}
+    </section>
+  `;
+}
+
+function renderAbcPage(ctx) {
+  const abcRows = buildAbcRows(ctx.products, ctx.summary);
+  const abcClasses = buildAbcClassSummary(abcRows);
+  const abcNarrative = buildAbcNarrative(abcRows, abcClasses);
+  return `
+    ${renderPageLead("ABC-анализ ассортимента", "ABC-анализ делит товары по вкладу в выручку: A — ядро продаж, B — средний слой, C — длинный хвост. Смотрите не только на класс, но и на маржу внутри него.", [
+      "A: первые ~80% выручки",
+      "B: следующие ~15%",
+      "C: остаток хвоста"
+    ])}
+    ${renderToolbar()}
+    ${renderMetricStrip(abcClasses.map((item) => ({
+      label: `Класс ${item.abcClass}`,
+      value: `${formatMoney(item.revenue)}`,
+      sub: `${item.items} поз. · маржа ${formatPct(item.margin)} · ${formatNumber(item.qty)} шт`
+    })))}
+    ${renderMetricStrip(abcNarrative.findings)}
+    <section class="grid equal">
+      <article class="panel">
+        <div class="panel-head"><div><h3>Как читать ABC</h3><p>Коротко и по делу.</p></div></div>
+        ${renderRiskCards([
+          { level: "ok", title: "Класс A — защищать", text: "Это товары, на которых стоит основная касса. Их нужно держать в наличии, не ломать подачу и внимательно следить за экономикой.", advice: "Если у A проседает маржа, проблема сразу бьет по итогу всего периода." },
+          { level: "warning", title: "Класс B — зона роста", text: "Это средний слой ассортимента. Его удобно усиливать через подачу, наборы и апсейл.", advice: "Ищите позиции, которые можно подтолкнуть в A без потери маржи." },
+          { level: "ok", title: "Класс C — хвост", text: "Здесь часто лежат редкие, сезонные или просто незаметные позиции.", advice: "Часть из них можно оставить как разнообразие, а часть — пересобрать или убрать из фокуса." }
+        ])}
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div><h3>Вывод и совет по вашим данным</h3><p>Не теоретический, а по текущему файлу.</p></div></div>
+        ${renderRiskCards(abcNarrative.advice.length ? abcNarrative.advice.map((item) => ({
+          level: "warning",
+          title: item.title,
+          text: item.text,
+          advice: item.detail
+        })) : [{
+          level: "ok",
+          title: "Структура выглядит сбалансированной",
+          text: "Внутри текущего периода не видно грубого перекоса между ядром и хвостом.",
+          advice: "Дальше смотрите точечно на маржу лидеров и наличие товаров, которые уже делают кассу."
+        }])}
+      </article>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><h3>Таблица ABC</h3><p>Фильтры в колонках помогут быстро отобрать только A, только слабые по марже товары или нужную категорию.</p></div></div>
+      ${renderFilterableTable("abc-page", [
+        { key: "rank", label: "#", type: "number", render: (item) => formatNumber(item.rank), filterValue: (item) => item.rank, numericValue: (item) => item.rank },
+        { key: "abcClass", label: "Класс", render: (item) => `<span class="abc-badge ${item.abcClass.toLowerCase()}">${item.abcClass}</span>`, sortValue: (item) => item.abcClass, filterValue: (item) => item.abcClass },
+        { key: "name", label: "Товар", render: (item) => `${item.name}<small>${item.category}</small>`, sortValue: (item) => item.name, filterValue: (item) => `${item.name} ${item.category}` },
+        { key: "revenue", label: "Выручка", type: "number", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}`, numericValue: (item) => item.revenue },
+        { key: "share", label: "Доля", type: "number", render: (item) => formatPct(item.share), filterValue: (item) => `${item.share}`, numericValue: (item) => item.share },
+        { key: "cumulative", label: "Накоплено", type: "number", render: (item) => formatPct(item.cumulative), filterValue: (item) => `${item.cumulative}`, numericValue: (item) => item.cumulative },
+        { key: "margin", label: "Маржа", type: "number", render: (item) => `<span class="${item.margin < 30 ? "bad" : item.margin > 60 ? "good" : ""}">${formatPct(item.margin)}</span>`, filterValue: (item) => `${item.margin}`, numericValue: (item) => item.margin }
+      ], abcRows)}
+    </section>
+  `;
+}
+
 function render() {
   const days = filteredDays();
   const grouped = groupedRows(days);
@@ -808,6 +1231,55 @@ function render() {
   const anomalyItems = buildAnomalies(days, grouped, categories, products, summary);
   const adviceItems = buildAdvice(days, grouped, categories, products, summary);
   const pills = buildPills(days, summary, categories, grouped);
+  const ctx = {
+    days,
+    grouped,
+    summary,
+    categories,
+    products,
+    weekdays,
+    deep,
+    rangeChange,
+    bestDay,
+    bestNet,
+    worstNet,
+    riskItems,
+    anomalyItems,
+    adviceItems,
+    pills
+  };
+  const pageKey = currentPage();
+
+  if (pageKey === "categories") {
+    document.getElementById("app").innerHTML = renderCategoriesPage(ctx);
+    bindControls();
+    bindChartTooltips();
+    return;
+  }
+  if (pageKey === "products") {
+    document.getElementById("app").innerHTML = renderProductsPage(ctx);
+    bindControls();
+    bindChartTooltips();
+    return;
+  }
+  if (pageKey === "days") {
+    document.getElementById("app").innerHTML = renderDaysPage(ctx);
+    bindControls();
+    bindChartTooltips();
+    return;
+  }
+  if (pageKey === "risks") {
+    document.getElementById("app").innerHTML = renderRisksPage(ctx);
+    bindControls();
+    bindChartTooltips();
+    return;
+  }
+  if (pageKey === "abc") {
+    document.getElementById("app").innerHTML = renderAbcPage(ctx);
+    bindControls();
+    bindChartTooltips();
+    return;
+  }
 
   document.getElementById("app").innerHTML = `
     <section class="hero">

@@ -280,6 +280,8 @@ main{width:min(1380px,calc(100% - 28px));margin:22px auto 56px}
 .panel{padding:20px}
 .panel h3,.panel h2{margin:0 0 10px;font-family:Georgia,Times New Roman,serif;letter-spacing:0}
 .panel h3{font-size:22px}
+.page-lead h2{font-size:28px}
+.page-lead p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
 .panel-head{
   display:flex;
   align-items:baseline;
@@ -452,6 +454,19 @@ main{width:min(1380px,calc(100% - 28px));margin:22px auto 56px}
   color:var(--muted);
   font-size:12px
 }
+.abc-badge{
+  display:inline-flex;
+  min-width:28px;
+  justify-content:center;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.04em
+}
+.abc-badge.a{background:rgba(86,211,155,.16);color:var(--good)}
+.abc-badge.b{background:rgba(255,180,84,.16);color:var(--warning)}
+.abc-badge.c{background:rgba(255,107,129,.14);color:var(--berry)}
 @media(max-width:1120px){
   .summary,.metric-cards,.radar-grid,.weekday-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .hero,.grid,.grid.equal{grid-template-columns:1fr}
