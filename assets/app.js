@@ -5,7 +5,8 @@ const state = {
   category: "all",
   metric: "revenue",
   start: data.days[0]?.date ?? "",
-  end: data.days[data.days.length - 1]?.date ?? ""
+  end: data.days[data.days.length - 1]?.date ?? "",
+  tableFilters: {}
 };
 
 const rub = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
@@ -650,6 +651,59 @@ function buildPills(days, summary, categories, grouped) {
   return pills;
 }
 
+function getTableFilters(tableId, columns) {
+  if (!state.tableFilters[tableId]) {
+    state.tableFilters[tableId] = {};
+  }
+  for (const column of columns) {
+    if (!(column.key in state.tableFilters[tableId])) {
+      state.tableFilters[tableId][column.key] = "";
+    }
+  }
+  return state.tableFilters[tableId];
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function applyColumnFilters(rows, filters, columns) {
+  return rows.filter((row) =>
+    columns.every((column) => {
+      const query = (filters[column.key] || "").trim().toLowerCase();
+      if (!query) return true;
+      const raw = column.filterValue ? column.filterValue(row) : row[column.key];
+      return String(raw ?? "").toLowerCase().includes(query);
+    })
+  );
+}
+
+function renderFilterableTable(tableId, columns, rows) {
+  const filters = getTableFilters(tableId, columns);
+  const filteredRows = applyColumnFilters(rows, filters, columns);
+  const headerRow = `<tr>${columns.map((column) => `<th>${column.label}</th>`).join("")}</tr>`;
+  const filterRow = `<tr class="filter-row">${columns.map((column) => `
+    <th>
+      <input
+        class="column-filter"
+        data-table-filter="${tableId}"
+        data-filter-key="${column.key}"
+        type="text"
+        value="${escapeHtml(filters[column.key] || "")}"
+        placeholder="Фильтр"
+      >
+    </th>
+  `).join("")}</tr>`;
+  const bodyRows = filteredRows.length
+    ? filteredRows.map((row) => `<tr>${columns.map((column) => `<td>${column.render(row)}</td>`).join("")}</tr>`).join("")
+    : `<tr><td colspan="${columns.length}"><span class="muted">Нет строк по текущему фильтру.</span></td></tr>`;
+  return `<div class="table-wrap"><table class="table">${headerRow}${filterRow}${bodyRows}</table></div>`;
+}
+
 function render() {
   const days = filteredDays();
   const grouped = groupedRows(days);
@@ -806,23 +860,28 @@ function render() {
         <div class="panel-head">
           <div><h3>Категории периода</h3><p>Выручка, продажи и маржа по направлениям меню.</p></div>
         </div>
-        <div class="table-wrap">
-          <table class="table">
-            <tr><th>Категория</th><th>Выручка</th><th>Шт</th><th>Вал</th><th>Маржа</th></tr>
-            ${categories.map((item) => `<tr><td>${item.category}<small>Доля ${(item.revenue / Math.max(summary.revenue, 1) * 100).toFixed(1).replace(".", ",")}% выручки периода</small></td><td>${formatMoney(item.revenue)}</td><td>${formatNumber(item.qty)}</td><td>${formatMoney(item.gross)}</td><td>${formatPct(item.margin)}</td></tr>`).join("")}
-          </table>
-        </div>
+        ${renderFilterableTable("categories", [
+          {
+            key: "category",
+            label: "Категория",
+            render: (item) => `${item.category}<small>Доля ${(item.revenue / Math.max(summary.revenue, 1) * 100).toFixed(1).replace(".", ",")}% выручки периода</small>`
+          },
+          { key: "revenue", label: "Выручка", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}` },
+          { key: "qty", label: "Шт", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}` },
+          { key: "gross", label: "Вал", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}` },
+          { key: "margin", label: "Маржа", render: (item) => formatPct(item.margin), filterValue: (item) => `${item.margin} ${formatPct(item.margin)}` }
+        ], categories)}
       </article>
       <article class="panel">
         <div class="panel-head">
           <div><h3>Профиль недели</h3><p>Сравнение средних дней по выручке, марже и итогу.</p></div>
         </div>
-        <div class="table-wrap">
-          <table class="table">
-            <tr><th>День</th><th>Средняя выручка</th><th>Маржа</th><th>Средний итог</th></tr>
-            ${weekdays.filter((item) => item.days > 0).map((item) => `<tr><td>${item.label}<small>${item.days} наблюд. в периоде</small></td><td>${formatMoney(item.avgRevenue)}</td><td>${formatPct(item.margin)}</td><td class="${item.avgNet < 0 ? "bad" : "good"}">${formatMoney(item.avgNet)}</td></tr>`).join("")}
-          </table>
-        </div>
+        ${renderFilterableTable("weekdays", [
+          { key: "label", label: "День", render: (item) => `${item.label}<small>${item.days} наблюд. в периоде</small>` },
+          { key: "avgRevenue", label: "Средняя выручка", render: (item) => formatMoney(item.avgRevenue), filterValue: (item) => `${item.avgRevenue} ${formatMoney(item.avgRevenue)}` },
+          { key: "margin", label: "Маржа", render: (item) => formatPct(item.margin), filterValue: (item) => `${item.margin} ${formatPct(item.margin)}` },
+          { key: "avgNet", label: "Средний итог", render: (item) => `<span class="${item.avgNet < 0 ? "bad" : "good"}">${formatMoney(item.avgNet)}</span>`, filterValue: (item) => `${item.avgNet} ${formatMoney(item.avgNet)}` }
+        ], weekdays.filter((item) => item.days > 0))}
       </article>
     </section>
 
@@ -858,12 +917,18 @@ function render() {
         <div class="panel-head">
           <div><h3>Лидеры ассортимента</h3><p>Товары, которые дают деньги, и сразу видно, насколько они качественны по марже.</p></div>
         </div>
-        <div class="table-wrap">
-          <table class="table">
-            <tr><th>Товар</th><th>Категория</th><th>Выручка</th><th>Шт</th><th>Вал</th><th>Маржа</th></tr>
-            ${products.slice(0, 15).map((item) => `<tr><td>${item.name}<small>${item.margin < 30 ? "Нужен контроль экономики" : item.margin > 60 ? "Сильная валовая модель" : "Рабочая позиция"}</small></td><td>${item.category}</td><td>${formatMoney(item.revenue)}</td><td>${formatNumber(item.qty)}</td><td>${formatMoney(item.gross)}</td><td class="${item.margin < 30 ? "bad" : item.margin > 60 ? "good" : ""}">${formatPct(item.margin)}</td></tr>`).join("")}
-          </table>
-        </div>
+        ${renderFilterableTable("products", [
+          {
+            key: "name",
+            label: "Товар",
+            render: (item) => `${item.name}<small>${item.margin < 30 ? "Нужен контроль экономики" : item.margin > 60 ? "Сильная валовая модель" : "Рабочая позиция"}</small>`
+          },
+          { key: "category", label: "Категория", render: (item) => item.category },
+          { key: "revenue", label: "Выручка", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}` },
+          { key: "qty", label: "Шт", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}` },
+          { key: "gross", label: "Вал", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}` },
+          { key: "margin", label: "Маржа", render: (item) => `<span class="${item.margin < 30 ? "bad" : item.margin > 60 ? "good" : ""}">${formatPct(item.margin)}</span>`, filterValue: (item) => `${item.margin} ${formatPct(item.margin)}` }
+        ], products.slice(0, 15))}
       </article>
     </section>
 
@@ -871,15 +936,26 @@ function render() {
       <div class="panel-head">
         <div><h3>${state.group === "day" ? "Дневная" : "Недельная"} аналитика</h3><p>Сводные строки по выбранной группировке для более детального чтения периода.</p></div>
       </div>
-      <div class="table-wrap">
-        <table class="table">
-          <tr><th>${state.group === "day" ? "День" : "Неделя"}</th><th>Выручка</th><th>Шт</th><th>Вал</th><th>Маржа</th><th>Итог</th></tr>
-          ${grouped.slice().reverse().map((item) => {
+      ${renderFilterableTable("grouped", [
+        {
+          key: "label",
+          label: state.group === "day" ? "День" : "Неделя",
+          render: (item) => `${item.label}<small>${item.revenue < deep.avgRevenue * 0.8 ? "Слабее среднего периода" : item.revenue > deep.avgRevenue * 1.2 ? "Сильнее среднего периода" : "Около среднего"}</small>`
+        },
+        { key: "revenue", label: "Выручка", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}` },
+        { key: "qty", label: "Шт", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}` },
+        { key: "gross", label: "Вал", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}` },
+        {
+          key: "margin",
+          label: "Маржа",
+          render: (item) => formatPct(item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0),
+          filterValue: (item) => {
             const margin = item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0;
-            return `<tr><td>${item.label}<small>${item.revenue < deep.avgRevenue * 0.8 ? "Слабее среднего периода" : item.revenue > deep.avgRevenue * 1.2 ? "Сильнее среднего периода" : "Около среднего"}</small></td><td>${formatMoney(item.revenue)}</td><td>${formatNumber(item.qty)}</td><td>${formatMoney(item.gross)}</td><td>${formatPct(margin)}</td><td class="${item.net < 0 ? "bad" : "good"}">${formatMoney(item.net)}</td></tr>`;
-          }).join("")}
-        </table>
-      </div>
+            return `${margin} ${formatPct(margin)}`;
+          }
+        },
+        { key: "net", label: "Итог", render: (item) => `<span class="${item.net < 0 ? "bad" : "good"}">${formatMoney(item.net)}</span>`, filterValue: (item) => `${item.net} ${formatMoney(item.net)}` }
+      ], grouped.slice().reverse())}
     </section>
 
     <p class="footer-note">Сгенерировано ${data.generatedAt.replace("T", " ")}. Если выбрана конкретная категория, итог периода считается как валовая прибыль этой категории без распределения общего зарплатного фонда между категориями. Темная тема и глубокие метрики применяются ко всем страницам дашборда, включая GitHub Pages-публикацию.</p>
@@ -932,6 +1008,18 @@ function bindControls() {
     state.preset = "custom";
     render();
   };
+
+  document.querySelectorAll("[data-table-filter]").forEach((input) => {
+    input.oninput = () => {
+      const tableId = input.getAttribute("data-table-filter");
+      const key = input.getAttribute("data-filter-key");
+      if (!state.tableFilters[tableId]) {
+        state.tableFilters[tableId] = {};
+      }
+      state.tableFilters[tableId][key] = input.value;
+      render();
+    };
+  });
 }
 
 applyPreset(data.days);

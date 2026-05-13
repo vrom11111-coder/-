@@ -350,6 +350,23 @@ main{width:min(1380px,calc(100% - 28px));margin:22px auto 56px}
   color:var(--muted);
   font-weight:700
 }
+.table .filter-row th{
+  padding-top:8px;
+  padding-bottom:10px;
+  background:rgba(255,255,255,.015)
+}
+.column-filter{
+  width:100%;
+  min-height:34px;
+  border-radius:10px;
+  border:1px solid rgba(52,65,85,.85);
+  background:rgba(255,255,255,.03);
+  color:var(--ink);
+  padding:0 10px;
+  font:inherit;
+  font-size:12px
+}
+.column-filter::placeholder{color:#748096}
 .risk-grid{display:grid;gap:12px}
 .risk{
   padding:15px 17px;
