@@ -611,6 +611,19 @@ function dualMetricChart(series) {
   </svg>`;
 }
 
+function barChart(categories) {
+  if (!categories.length) return `<div class="bars"></div>`;
+  const max = categories[0].revenue || 1;
+  return `<div class="bars">${categories.slice(0, 6).map((item) => {
+    const width = (item.revenue / max) * 100;
+    return `<div class="bar-row">
+      <div class="bar-label"><span>${item.category}</span><strong>${formatMoney(item.revenue)}</strong></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+      <span class="muted">Маржа ${formatPct(item.margin)} · ${formatNumber(item.qty)} шт</span>
+    </div>`;
+  }).join("")}</div>`;
+}
+
 function weekdayChart(rows) {
   const filtered = rows.filter((row) => row.days > 0);
   if (!filtered.length) return `<div class="bars"></div>`;
