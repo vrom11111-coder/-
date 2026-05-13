@@ -350,6 +350,18 @@ main{width:min(1380px,calc(100% - 28px));margin:22px auto 56px}
   color:var(--muted);
   font-weight:700
 }
+.sortable-header{
+  cursor:pointer;
+  user-select:none;
+  transition:color .18s ease
+}
+.sortable-header:hover{color:var(--ink)}
+.sort-indicator{
+  display:inline-block;
+  margin-left:6px;
+  color:#7e8ba0;
+  font-size:10px
+}
 .table .filter-row th{
   padding-top:8px;
   padding-bottom:10px;
@@ -367,6 +379,14 @@ main{width:min(1380px,calc(100% - 28px));margin:22px auto 56px}
   font-size:12px
 }
 .column-filter::placeholder{color:#748096}
+.filter-hint{
+  display:block;
+  margin-top:5px;
+  color:#6f7b91;
+  font-size:10px;
+  text-transform:none;
+  letter-spacing:0
+}
 .risk-grid{display:grid;gap:12px}
 .risk{
   padding:15px 17px;

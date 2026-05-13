@@ -6,7 +6,8 @@ const state = {
   metric: "revenue",
   start: data.days[0]?.date ?? "",
   end: data.days[data.days.length - 1]?.date ?? "",
-  tableFilters: {}
+  tableFilters: {},
+  tableSorts: {}
 };
 
 const rub = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
@@ -663,6 +664,16 @@ function getTableFilters(tableId, columns) {
   return state.tableFilters[tableId];
 }
 
+function getTableSort(tableId, columns) {
+  if (!state.tableSorts[tableId]) {
+    state.tableSorts[tableId] = {
+      key: columns.find((column) => column.sortable !== false)?.key ?? columns[0]?.key ?? "",
+      dir: "desc"
+    };
+  }
+  return state.tableSorts[tableId];
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -677,15 +688,52 @@ function applyColumnFilters(rows, filters, columns) {
       const query = (filters[column.key] || "").trim().toLowerCase();
       if (!query) return true;
       const raw = column.filterValue ? column.filterValue(row) : row[column.key];
+      if (column.type === "number") {
+        const numericValue = Number(column.numericValue ? column.numericValue(row) : raw);
+        if (!Number.isNaN(numericValue)) {
+          const match = query.match(/^(>=|<=|>|<|=)\s*(-?\d+(?:[.,]\d+)?)$/);
+          if (match) {
+            const op = match[1];
+            const target = Number(match[2].replace(",", "."));
+            if (op === ">") return numericValue > target;
+            if (op === "<") return numericValue < target;
+            if (op === ">=") return numericValue >= target;
+            if (op === "<=") return numericValue <= target;
+            if (op === "=") return numericValue === target;
+          }
+        }
+      }
       return String(raw ?? "").toLowerCase().includes(query);
     })
   );
 }
 
+function sortRows(rows, sortState, columns) {
+  const column = columns.find((item) => item.key === sortState.key) || columns[0];
+  if (!column) return rows;
+  const direction = sortState.dir === "asc" ? 1 : -1;
+  const resolver = column.sortValue || column.numericValue || column.filterValue || ((row) => row[column.key]);
+  return [...rows].sort((a, b) => {
+    const av = resolver(a);
+    const bv = resolver(b);
+    if (column.type === "number") {
+      return (Number(av) - Number(bv)) * direction;
+    }
+    return String(av ?? "").localeCompare(String(bv ?? ""), "ru", { sensitivity: "base" }) * direction;
+  });
+}
+
 function renderFilterableTable(tableId, columns, rows) {
   const filters = getTableFilters(tableId, columns);
+  const sortState = getTableSort(tableId, columns);
   const filteredRows = applyColumnFilters(rows, filters, columns);
-  const headerRow = `<tr>${columns.map((column) => `<th>${column.label}</th>`).join("")}</tr>`;
+  const sortedRows = sortRows(filteredRows, sortState, columns);
+  const headerRow = `<tr>${columns.map((column) => {
+    const sortable = column.sortable !== false;
+    const active = sortState.key === column.key;
+    const arrow = !sortable ? "" : `<span class="sort-indicator">${active ? (sortState.dir === "asc" ? "▲" : "▼") : "↕"}</span>`;
+    return `<th class="${sortable ? "sortable-header" : ""}" ${sortable ? `data-sort-table="${tableId}" data-sort-key="${column.key}"` : ""}>${column.label}${arrow}</th>`;
+  }).join("")}</tr>`;
   const filterRow = `<tr class="filter-row">${columns.map((column) => `
     <th>
       <input
@@ -696,10 +744,11 @@ function renderFilterableTable(tableId, columns, rows) {
         value="${escapeHtml(filters[column.key] || "")}"
         placeholder="Фильтр"
       >
+      ${column.type === "number" ? `<span class="filter-hint">Можно: >, <, >=, <=, =</span>` : ""}
     </th>
   `).join("")}</tr>`;
-  const bodyRows = filteredRows.length
-    ? filteredRows.map((row) => `<tr>${columns.map((column) => `<td>${column.render(row)}</td>`).join("")}</tr>`).join("")
+  const bodyRows = sortedRows.length
+    ? sortedRows.map((row) => `<tr>${columns.map((column) => `<td>${column.render(row)}</td>`).join("")}</tr>`).join("")
     : `<tr><td colspan="${columns.length}"><span class="muted">Нет строк по текущему фильтру.</span></td></tr>`;
   return `<div class="table-wrap"><table class="table">${headerRow}${filterRow}${bodyRows}</table></div>`;
 }
@@ -864,12 +913,13 @@ function render() {
           {
             key: "category",
             label: "Категория",
-            render: (item) => `${item.category}<small>Доля ${(item.revenue / Math.max(summary.revenue, 1) * 100).toFixed(1).replace(".", ",")}% выручки периода</small>`
+            render: (item) => `${item.category}<small>Доля ${(item.revenue / Math.max(summary.revenue, 1) * 100).toFixed(1).replace(".", ",")}% выручки периода</small>`,
+            sortValue: (item) => item.category
           },
-          { key: "revenue", label: "Выручка", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}` },
-          { key: "qty", label: "Шт", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}` },
-          { key: "gross", label: "Вал", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}` },
-          { key: "margin", label: "Маржа", render: (item) => formatPct(item.margin), filterValue: (item) => `${item.margin} ${formatPct(item.margin)}` }
+          { key: "revenue", label: "Выручка", type: "number", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}`, numericValue: (item) => item.revenue },
+          { key: "qty", label: "Шт", type: "number", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}`, numericValue: (item) => item.qty },
+          { key: "gross", label: "Вал", type: "number", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}`, numericValue: (item) => item.gross },
+          { key: "margin", label: "Маржа", type: "number", render: (item) => formatPct(item.margin), filterValue: (item) => `${item.margin} ${formatPct(item.margin)}`, numericValue: (item) => item.margin }
         ], categories)}
       </article>
       <article class="panel">
@@ -877,10 +927,10 @@ function render() {
           <div><h3>Профиль недели</h3><p>Сравнение средних дней по выручке, марже и итогу.</p></div>
         </div>
         ${renderFilterableTable("weekdays", [
-          { key: "label", label: "День", render: (item) => `${item.label}<small>${item.days} наблюд. в периоде</small>` },
-          { key: "avgRevenue", label: "Средняя выручка", render: (item) => formatMoney(item.avgRevenue), filterValue: (item) => `${item.avgRevenue} ${formatMoney(item.avgRevenue)}` },
-          { key: "margin", label: "Маржа", render: (item) => formatPct(item.margin), filterValue: (item) => `${item.margin} ${formatPct(item.margin)}` },
-          { key: "avgNet", label: "Средний итог", render: (item) => `<span class="${item.avgNet < 0 ? "bad" : "good"}">${formatMoney(item.avgNet)}</span>`, filterValue: (item) => `${item.avgNet} ${formatMoney(item.avgNet)}` }
+          { key: "label", label: "День", render: (item) => `${item.label}<small>${item.days} наблюд. в периоде</small>`, sortValue: (item) => item.label },
+          { key: "avgRevenue", label: "Средняя выручка", type: "number", render: (item) => formatMoney(item.avgRevenue), filterValue: (item) => `${item.avgRevenue} ${formatMoney(item.avgRevenue)}`, numericValue: (item) => item.avgRevenue },
+          { key: "margin", label: "Маржа", type: "number", render: (item) => formatPct(item.margin), filterValue: (item) => `${item.margin} ${formatPct(item.margin)}`, numericValue: (item) => item.margin },
+          { key: "avgNet", label: "Средний итог", type: "number", render: (item) => `<span class="${item.avgNet < 0 ? "bad" : "good"}">${formatMoney(item.avgNet)}</span>`, filterValue: (item) => `${item.avgNet} ${formatMoney(item.avgNet)}`, numericValue: (item) => item.avgNet }
         ], weekdays.filter((item) => item.days > 0))}
       </article>
     </section>
@@ -921,13 +971,14 @@ function render() {
           {
             key: "name",
             label: "Товар",
-            render: (item) => `${item.name}<small>${item.margin < 30 ? "Нужен контроль экономики" : item.margin > 60 ? "Сильная валовая модель" : "Рабочая позиция"}</small>`
+            render: (item) => `${item.name}<small>${item.margin < 30 ? "Нужен контроль экономики" : item.margin > 60 ? "Сильная валовая модель" : "Рабочая позиция"}</small>`,
+            sortValue: (item) => item.name
           },
-          { key: "category", label: "Категория", render: (item) => item.category },
-          { key: "revenue", label: "Выручка", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}` },
-          { key: "qty", label: "Шт", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}` },
-          { key: "gross", label: "Вал", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}` },
-          { key: "margin", label: "Маржа", render: (item) => `<span class="${item.margin < 30 ? "bad" : item.margin > 60 ? "good" : ""}">${formatPct(item.margin)}</span>`, filterValue: (item) => `${item.margin} ${formatPct(item.margin)}` }
+          { key: "category", label: "Категория", render: (item) => item.category, sortValue: (item) => item.category },
+          { key: "revenue", label: "Выручка", type: "number", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}`, numericValue: (item) => item.revenue },
+          { key: "qty", label: "Шт", type: "number", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}`, numericValue: (item) => item.qty },
+          { key: "gross", label: "Вал", type: "number", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}`, numericValue: (item) => item.gross },
+          { key: "margin", label: "Маржа", type: "number", render: (item) => `<span class="${item.margin < 30 ? "bad" : item.margin > 60 ? "good" : ""}">${formatPct(item.margin)}</span>`, filterValue: (item) => `${item.margin} ${formatPct(item.margin)}`, numericValue: (item) => item.margin }
         ], products.slice(0, 15))}
       </article>
     </section>
@@ -937,24 +988,26 @@ function render() {
         <div><h3>${state.group === "day" ? "Дневная" : "Недельная"} аналитика</h3><p>Сводные строки по выбранной группировке для более детального чтения периода.</p></div>
       </div>
       ${renderFilterableTable("grouped", [
-        {
-          key: "label",
-          label: state.group === "day" ? "День" : "Неделя",
-          render: (item) => `${item.label}<small>${item.revenue < deep.avgRevenue * 0.8 ? "Слабее среднего периода" : item.revenue > deep.avgRevenue * 1.2 ? "Сильнее среднего периода" : "Около среднего"}</small>`
-        },
-        { key: "revenue", label: "Выручка", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}` },
-        { key: "qty", label: "Шт", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}` },
-        { key: "gross", label: "Вал", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}` },
-        {
-          key: "margin",
-          label: "Маржа",
-          render: (item) => formatPct(item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0),
-          filterValue: (item) => {
-            const margin = item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0;
+          {
+            key: "label",
+            label: state.group === "day" ? "День" : "Неделя",
+            render: (item) => `${item.label}<small>${item.revenue < deep.avgRevenue * 0.8 ? "Слабее среднего периода" : item.revenue > deep.avgRevenue * 1.2 ? "Сильнее среднего периода" : "Около среднего"}</small>`,
+            sortValue: (item) => item.label
+          },
+          { key: "revenue", label: "Выручка", type: "number", render: (item) => formatMoney(item.revenue), filterValue: (item) => `${item.revenue} ${formatMoney(item.revenue)}`, numericValue: (item) => item.revenue },
+          { key: "qty", label: "Шт", type: "number", render: (item) => formatNumber(item.qty), filterValue: (item) => `${item.qty} ${formatNumber(item.qty)}`, numericValue: (item) => item.qty },
+          { key: "gross", label: "Вал", type: "number", render: (item) => formatMoney(item.gross), filterValue: (item) => `${item.gross} ${formatMoney(item.gross)}`, numericValue: (item) => item.gross },
+          {
+            key: "margin",
+            label: "Маржа",
+            type: "number",
+            render: (item) => formatPct(item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0),
+            filterValue: (item) => {
+              const margin = item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0;
             return `${margin} ${formatPct(margin)}`;
-          }
-        },
-        { key: "net", label: "Итог", render: (item) => `<span class="${item.net < 0 ? "bad" : "good"}">${formatMoney(item.net)}</span>`, filterValue: (item) => `${item.net} ${formatMoney(item.net)}` }
+            }
+          },
+          { key: "net", label: "Итог", type: "number", render: (item) => `<span class="${item.net < 0 ? "bad" : "good"}">${formatMoney(item.net)}</span>`, filterValue: (item) => `${item.net} ${formatMoney(item.net)}`, numericValue: (item) => item.net }
       ], grouped.slice().reverse())}
     </section>
 
@@ -1017,6 +1070,23 @@ function bindControls() {
         state.tableFilters[tableId] = {};
       }
       state.tableFilters[tableId][key] = input.value;
+      render();
+    };
+  });
+
+  document.querySelectorAll("[data-sort-table]").forEach((header) => {
+    header.onclick = () => {
+      const tableId = header.getAttribute("data-sort-table");
+      const key = header.getAttribute("data-sort-key");
+      if (!state.tableSorts[tableId]) {
+        state.tableSorts[tableId] = { key, dir: "desc" };
+      }
+      else if (state.tableSorts[tableId].key === key) {
+        state.tableSorts[tableId].dir = state.tableSorts[tableId].dir === "asc" ? "desc" : "asc";
+      }
+      else {
+        state.tableSorts[tableId] = { key, dir: "desc" };
+      }
       render();
     };
   });
