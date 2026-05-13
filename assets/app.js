@@ -10,6 +10,8 @@ const state = {
   tableSorts: {}
 };
 
+let activeTooltipCleanup = null;
+
 const rub = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
 const num1 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 });
 const weekdayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -220,6 +222,15 @@ function metricTitle() {
     gross: "Валовая прибыль",
     qty: "Продано, шт",
     net: "Итог дня"
+  }[state.metric];
+}
+
+function tooltipMetricLabel() {
+  return {
+    revenue: "Выручка",
+    gross: "Валовая прибыль",
+    qty: "Продано, шт",
+    net: "Итог"
   }[state.metric];
 }
 
@@ -522,8 +533,9 @@ function lineChart(series) {
   const span = Math.max(1, max - min);
   const points = series.map((item, index) => {
     const x = padX + index * ((width - padX * 2) / Math.max(1, series.length - 1));
-    const y = height - padY - ((selectedMetric(item) - min) / span) * (height - padY * 2);
-    return { x, y, label: item.label, value: selectedMetric(item) };
+    const value = selectedMetric(item);
+    const y = height - padY - ((value - min) / span) * (height - padY * 2);
+    return { x, y, label: item.label, value, item };
   });
   const poly = points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
   const area = [`${points[0].x.toFixed(1)},${height - padY}`]
@@ -541,13 +553,24 @@ function lineChart(series) {
     if (series.length > 10 && index % Math.ceil(series.length / 6) !== 0 && index !== points.length - 1) return "";
     return `<text x="${p.x}" y="${height - 8}" text-anchor="middle">${p.label}</text>`;
   }).join("");
-  return `<svg class="chart" viewBox="0 0 ${width} ${height}">
+  const pointPayload = points.map((point) => ({
+    x: point.x,
+    label: point.label,
+    value: point.value,
+    revenue: point.item.revenue,
+    gross: point.item.gross,
+    qty: point.item.qty,
+    net: point.item.net
+  }));
+  return `<svg class="chart js-chart" data-chart-type="line" data-chart-metric="${state.metric}" data-points='${escapeHtml(JSON.stringify(pointPayload))}' viewBox="0 0 ${width} ${height}">
     ${grid}
     <line class="axis" x1="${padX}" y1="${height - padY}" x2="${width - padX}" y2="${height - padY}"></line>
+    <line class="chart-guideline" x1="${padX}" y1="${padY}" x2="${padX}" y2="${height - padY}" style="display:none"></line>
     <polygon class="series-area" points="${area}"></polygon>
     <polyline class="series-line" points="${poly}"></polyline>
     ${dots}
     ${labels}
+    <rect class="chart-overlay" x="${padX}" y="${padY}" width="${width - padX * 2}" height="${height - padY * 2}"></rect>
   </svg>`;
 }
 
@@ -573,11 +596,21 @@ function dualMetricChart(series) {
   });
   const zeroY = height - padY - ((0 - netMin) / spanNet) * (height - padY * 2);
   const barWidth = Math.max(10, (width - padX * 2) / Math.max(series.length * 1.7, 8));
+  const payload = [];
   const bars = series.map((item, index) => {
     const x = padX + index * ((width - padX * 2) / Math.max(1, series.length - 1)) - barWidth / 2;
     const y = height - padY - ((item.net - netMin) / spanNet) * (height - padY * 2);
     const top = Math.min(y, zeroY);
     const barHeight = Math.abs(zeroY - y);
+    payload.push({
+      x: padX + index * ((width - padX * 2) / Math.max(1, series.length - 1)),
+      label: item.label,
+      revenue: item.revenue,
+      gross: item.gross,
+      qty: item.qty,
+      net: item.net,
+      margin: item.revenue > 0 ? (item.gross / item.revenue) * 100 : 0
+    });
     return `<rect class="bar ${item.net < 0 ? "negative" : ""}" x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${Math.max(barHeight, 2).toFixed(1)}" rx="7"></rect>`;
   }).join("");
   const poly = marginPoints.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
@@ -600,16 +633,18 @@ function dualMetricChart(series) {
     const y = height - padY - step * (height - padY * 2);
     return `<line class="grid-line" x1="${padX}" y1="${y}" x2="${width - padX}" y2="${y}"></line>`;
   }).join("");
-  return `<svg class="chart tall" viewBox="0 0 ${width} ${height}">
+  return `<svg class="chart tall js-chart" data-chart-type="dual" data-chart-metric="${state.metric}" data-points='${escapeHtml(JSON.stringify(payload))}' viewBox="0 0 ${width} ${height}">
     ${grid}
     <line class="axis" x1="${padX}" y1="${height - padY}" x2="${width - padX}" y2="${height - padY}"></line>
     <line class="axis" x1="${padX}" y1="${zeroY}" x2="${width - padX}" y2="${zeroY}"></line>
+    <line class="chart-guideline" x1="${padX}" y1="${padY}" x2="${padX}" y2="${height - padY}" style="display:none"></line>
     ${leftScale}
     ${rightScale}
     ${bars}
     <polyline class="series-line secondary" points="${poly}"></polyline>
     ${dots}
     ${labels}
+    <rect class="chart-overlay" x="${padX}" y="${padY}" width="${width - padX * 2}" height="${height - padY * 2}"></rect>
   </svg>`;
 }
 
@@ -1015,6 +1050,7 @@ function render() {
   `;
 
   bindControls();
+  bindChartTooltips();
 }
 
 function bindControls() {
@@ -1090,6 +1126,84 @@ function bindControls() {
       render();
     };
   });
+}
+
+function removeTooltip() {
+  if (activeTooltipCleanup) {
+    activeTooltipCleanup();
+    activeTooltipCleanup = null;
+  }
+}
+
+function bindChartTooltips() {
+  removeTooltip();
+  const tooltip = document.createElement("div");
+  tooltip.className = "chart-tooltip";
+  document.body.appendChild(tooltip);
+
+  function showTooltip(event, html) {
+    tooltip.innerHTML = html;
+    tooltip.classList.add("visible");
+    const offsetX = 18;
+    const offsetY = 18;
+    const maxLeft = window.innerWidth - tooltip.offsetWidth - 12;
+    const maxTop = window.innerHeight - tooltip.offsetHeight - 12;
+    const left = Math.max(12, Math.min(event.clientX + offsetX, maxLeft));
+    const top = Math.max(12, Math.min(event.clientY + offsetY, maxTop));
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  }
+
+  function hideTooltip() {
+    tooltip.classList.remove("visible");
+  }
+
+  document.querySelectorAll(".js-chart").forEach((chart) => {
+    const overlay = chart.querySelector(".chart-overlay");
+    const guideline = chart.querySelector(".chart-guideline");
+    const points = JSON.parse(chart.getAttribute("data-points") || "[]");
+    if (!overlay || !points.length) return;
+
+    overlay.addEventListener("mousemove", (event) => {
+      const svgRect = chart.getBoundingClientRect();
+      const x = event.clientX - svgRect.left;
+      let closest = points[0];
+      let distance = Math.abs(points[0].x - x);
+      for (const point of points) {
+        const current = Math.abs(point.x - x);
+        if (current < distance) {
+          closest = point;
+          distance = current;
+        }
+      }
+      if (guideline) {
+        guideline.setAttribute("x1", closest.x);
+        guideline.setAttribute("x2", closest.x);
+        guideline.style.display = "block";
+      }
+      const html = chart.getAttribute("data-chart-type") === "dual"
+        ? `<strong>${closest.label}</strong>
+           <div>Выручка: ${formatMoney(closest.revenue)}</div>
+           <div>Вал: ${formatMoney(closest.gross)}</div>
+           <div>Маржа: ${formatPct(closest.margin)}</div>
+           <div>Итог: ${formatMoney(closest.net)}</div>`
+        : `<strong>${closest.label}</strong>
+           <div>${tooltipMetricLabel()}: ${state.metric === "qty" ? formatNumber(closest.value) : formatMoney(closest.value)}</div>
+           <div>Выручка: ${formatMoney(closest.revenue)}</div>
+           <div>Вал: ${formatMoney(closest.gross)}</div>
+           <div>Итог: ${formatMoney(closest.net)}</div>`;
+      showTooltip(event, html);
+    });
+
+    overlay.addEventListener("mouseleave", () => {
+      if (guideline) guideline.style.display = "none";
+      hideTooltip();
+    });
+  });
+
+  activeTooltipCleanup = () => {
+    tooltip.remove();
+  };
 }
 
 applyPreset(data.days);
