@@ -769,23 +769,10 @@ function renderFilterableTable(tableId, columns, rows) {
     const arrow = !sortable ? "" : `<span class="sort-indicator">${active ? (sortState.dir === "asc" ? "▲" : "▼") : "↕"}</span>`;
     return `<th class="${sortable ? "sortable-header" : ""}" ${sortable ? `data-sort-table="${tableId}" data-sort-key="${column.key}"` : ""}>${column.label}${arrow}</th>`;
   }).join("")}</tr>`;
-  const filterRow = `<tr class="filter-row">${columns.map((column) => `
-    <th>
-      <input
-        class="column-filter"
-        data-table-filter="${tableId}"
-        data-filter-key="${column.key}"
-        type="text"
-        value="${escapeHtml(filters[column.key] || "")}"
-        placeholder="Фильтр"
-      >
-      ${column.type === "number" ? `<span class="filter-hint">Можно: >, <, >=, <=, =</span>` : ""}
-    </th>
-  `).join("")}</tr>`;
   const bodyRows = sortedRows.length
     ? sortedRows.map((row) => `<tr>${columns.map((column) => `<td>${column.render(row)}</td>`).join("")}</tr>`).join("")
     : `<tr><td colspan="${columns.length}"><span class="muted">Нет строк по текущему фильтру.</span></td></tr>`;
-  return `<div class="table-wrap"><table class="table">${headerRow}${filterRow}${bodyRows}</table></div>`;
+  return `<div class="table-wrap"><table class="table">${headerRow}${bodyRows}</table></div>`;
 }
 
 function currentPage() {
