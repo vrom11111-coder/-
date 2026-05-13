@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Блинная - PDF сводка</title>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: #2b1a16;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #fffaf5;
+    }
+    .page {
+      min-height: 270mm;
+      padding: 8mm 2mm 0;
+      page-break-after: always;
+    }
+    .page:last-child { page-break-after: auto; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+    .panel {
+      background: #fffdfa;
+      border: 1px solid #ead7ca;
+      border-radius: 20px;
+      padding: 18px 20px;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      letter-spacing: 0;
+    }
+    h1 { font-size: 30px; margin-top: 8px; }
+    h2 { font-size: 24px; margin-bottom: 12px; }
+    h3 { font-size: 16px; margin-bottom: 6px; }
+    p { margin: 0; line-height: 1.45; }
+    .eyebrow {
+      color: #b23a48;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .muted { color: #7a655f; }
+    .stats {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+    .stat {
+      border: 1px solid #ead7ca;
+      border-radius: 16px;
+      padding: 14px;
+      background: #fff;
+    }
+    .stat strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 24px;
+    }
+    .stack {
+      height: 100%;
+      min-height: 220px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(145deg, #fffefc, #fff3e7);
+    }
+    .stack::before {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      right: -30px;
+      top: -20px;
+      background: radial-gradient(circle, rgba(243,201,105,.8), rgba(243,201,105,0));
+    }
+    .pancake {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 22px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #f1cf82, #dda557);
+      border: 1px solid rgba(168,104,40,.25);
+    }
+    .p1 { width: 180px; bottom: 36px; }
+    .p2 { width: 168px; bottom: 56px; }
+    .p3 { width: 156px; bottom: 76px; }
+    .p4 { width: 144px; bottom: 96px; }
+    .p5 { width: 132px; bottom: 116px; }
+    .syrup {
+      position: absolute;
+      width: 56px;
+      height: 32px;
+      left: 50%;
+      bottom: 120px;
+      transform: translateX(-50%);
+      border-radius: 40px;
+      background: linear-gradient(180deg, #8d4022, #6a2918);
+    }
+    .berry {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffd8de, #b23a48 60%, #872634);
+      bottom: 152px;
+      left: 50%;
+    }
+    .b1 { margin-left: -22px; }
+    .b2 { margin-left: -2px; }
+    .b3 { margin-left: 18px; }
+    .section-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .table th, .table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #ead7ca;
+      text-align: right;
+      vertical-align: top;
+    }
+    .table th:first-child, .table td:first-child { text-align: left; }
+    .table th:nth-child(2), .table td:nth-child(2) { text-align: left; }
+    .table th {
+      color: #7a655f;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-size: 11px;
+    }
+    .callout {
+      border-left: 5px solid #d07a2d;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fff;
+      margin-bottom: 10px;
+      border: 1px solid #ead7ca;
+    }
+    .callout.critical { border-left-color: #b53636; }
+    .callout.ok { border-left-color: #1d7a55; }
+    .hint {
+      margin-top: 6px;
+      color: #7a655f;
+    }
+    ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      line-height: 1.5;
+    }
+    .footer {
+      margin-top: 14px;
+      color: #7a655f;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <section class="page">
+    <div class="hero">
+      <div class="panel">
+        <div class="eyebrow">Telegram PDF summary</div>
+        <h1>Блинная: краткая сводка по бизнесу</h1>
+        <p class="muted" style="margin-top:10px;">Период для управленческого обзора: 13.04.2026 - 12.05.2026. Сформировано 13.05.2026 21:50.</p>
+        <div class="stats">
+          <div class="stat"><span class="muted">Последний день</span><strong>12.05.2026</strong></div>
+          <div class="stat"><span class="muted">Выручка дня</span><strong>17 930 ₽</strong></div>
+          <div class="stat"><span class="muted">Валовая прибыль дня</span><strong>10 268 ₽</strong></div>
+          <div class="stat"><span class="muted">Итог дня</span><strong>-2 494 ₽</strong></div>
+        </div>
+      </div>
+      <div class="panel stack">
+        <div class="pancake p1"></div>
+        <div class="pancake p2"></div>
+        <div class="pancake p3"></div>
+        <div class="pancake p4"></div>
+        <div class="pancake p5"></div>
+        <div class="syrup"></div>
+        <div class="berry b1"></div>
+        <div class="berry b2"></div>
+        <div class="berry b3"></div>
+      </div>
+    </div>
+
+    <div class="section-grid">
+      <div class="panel">
+        <h2>Итоги за период</h2>
+        <div class="stats">
+          <div class="stat"><span class="muted">Выручка</span><strong>539 050 ₽</strong></div>
+          <div class="stat"><span class="muted">Валовая прибыль</span><strong>311 332 ₽</strong></div>
+          <div class="stat"><span class="muted">Продано порций</span><strong>3 038</strong></div>
+          <div class="stat"><span class="muted">Средний чек</span><strong>177 ₽</strong></div>
+          <div class="stat"><span class="muted">Маржа</span><strong>57,8%</strong></div>
+          <div class="stat"><span class="muted">Итог периода</span><strong>-68 945 ₽</strong></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Быстрые ориентиры</h2>
+        <div class="callout ok">
+          <h3>Лучший день по выручке</h3>
+          <p>15.04.2026: 26 690 ₽</p>
+        </div>
+        <div class="callout critical">
+          <h3>Самый тяжелый день</h3>
+          <p>10.05.2026: итог -6 317 ₽</p>
+        </div>
+        <div class="callout">
+          <h3>ЗП фонд за период</h3>
+          <p>366 000 ₽</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">PDF удобно пересылать через Telegram. Интерактивная версия остается в папке dashboard.</div>
+  </section>
+
+  <section class="page">
+    <div class="section-grid">
+      <div class="panel">
+        <h2>Категории периода</h2>
+        <table class="table">
+          <tr><th>Категория</th><th>Выручка</th><th>Шт</th><th>Вал</th><th>Маржа</th></tr>
+          
+        <tr>
+          <td>Сытные</td>
+          <td>321 320 ₽</td>
+          <td>1 241</td>
+          <td>181 465 ₽</td>
+          <td>56,5%</td>
+        </tr>
+        
+        <tr>
+          <td>Сладкие</td>
+          <td>93 560 ₽</td>
+          <td>699</td>
+          <td>56 413 ₽</td>
+          <td>60,3%</td>
+        </tr>
+        
+        <tr>
+          <td>Напитки</td>
+          <td>61 000 ₽</td>
+          <td>520</td>
+          <td>36 395 ₽</td>
+          <td>59,7%</td>
+        </tr>
+        
+        <tr>
+          <td>Фри</td>
+          <td>31 000 ₽</td>
+          <td>156</td>
+          <td>17 425 ₽</td>
+          <td>56,2%</td>
+        </tr>
+        
+        <tr>
+          <td>Добавки</td>
+          <td>17 390 ₽</td>
+          <td>394</td>
+          <td>12 292 ₽</td>
+          <td>70,7%</td>
+        </tr>
+        
+        <tr>
+          <td>Комбо</td>
+          <td>14 780 ₽</td>
+          <td>28</td>
+          <td>7 341 ₽</td>
+          <td>49,7%</td>
+        </tr>
+        
+        </table>
+      </div>
+      <div class="panel">
+        <h2>Топ товаров</h2>
+        <table class="table">
+          <tr><th>Товар</th><th>Категория</th><th>Выручка</th><th>Маржа</th></tr>
+          
+        <tr>
+          <td>Блин Мясник</td>
+          <td>Сытные</td>
+          <td>53 760 ₽</td>
+          <td>60,0%</td>
+        </tr>
+        
+        <tr>
+          <td>Блин Жульен</td>
+          <td>Сытные</td>
+          <td>34 500 ₽</td>
+          <td>69,8%</td>
+        </tr>
+        
+        <tr>
+          <td>Блин Цезарь с курицей</td>
+          <td>Сытные</td>
+          <td>28 080 ₽</td>
+          <td>53,4%</td>
+        </tr>
+        
+        <tr>
+          <td>Блин Роял Фиш</td>
+          <td>Сытные</td>
+          <td>23 800 ₽</td>
+          <td>40,1%</td>
+        </tr>
+        
+        <tr>
+          <td>Блин Банан-шоколад</td>
+          <td>Сладкие</td>
+          <td>22 200 ₽</td>
+          <td>54,5%</td>
+        </tr>
+        
+        <tr>
+          <td>Блин Цезарь с лососем</td>
+          <td>Сытные</td>
+          <td>22 110 ₽</td>
+          <td>51,7%</td>
+        </tr>
+        
+        <tr>
+          <td>Блин Хот-дог</td>
+          <td>Сытные</td>
+          <td>19 320 ₽</td>
+          <td>47,8%</td>
+        </tr>
+        
+        <tr>
+          <td>Блин Царский с курицей</td>
+          <td>Сытные</td>
+          <td>18 750 ₽</td>
+          <td>51,2%</td>
+        </tr>
+        
+        </table>
+      </div>
+    </div>
+
+    <div class="section-grid" style="margin-top:14px;">
+      <div class="panel">
+        <h2>Риски</h2>
+        <div class='callout critical'><h3>День в минусе</h3><p>Итог дня 12.05.2026: -2 494 ₽.</p><p class='hint'>Разберите зарплатный фонд, стаф и позиции с низкой валовой маржой.</p></div><div class='callout critical'><h3>Высокий зарплатный фонд</h3><p>ЗП фонд составляет 68,0% от выручки последнего дня.</p><p class='hint'>Для малой дневной выручки зарплата быстро съедает валовую прибыль.</p></div>
+      </div>
+      <div class="panel">
+        <h2>Аномалии</h2>
+        <div class='callout warning'><h3>День выше нормы</h3><p>15.04.2026: выручка 26 690 ₽.</p></div><div class='callout warning'><h3>День ниже нормы</h3><p>10.05.2026: выручка 11 335 ₽.</p></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:14px;">
+      <h2>Полезные советы</h2>
+      <ul><li>Поджать фонд смен: за период зарплата занимает 67,9% выручки.</li><li>Усилить лидирующую категорию Сытные: она дает 59,6% выручки периода.</li><li>Держать в наличии хит Блин Мясник: он приносит 53 760 ₽.</li></ul>
+    </div>
+  </section>
+</body>
+</html>

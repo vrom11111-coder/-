@@ -1,0 +1,5 @@
+﻿Browser PDF export attempted: C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+Browser PDF export: failed
+Word PDF export attempted
+Word PDF export: failed
+Final result: PDF was not created in this session
