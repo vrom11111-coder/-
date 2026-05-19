@@ -880,8 +880,10 @@ body {
   }
   .chart-hint {
     display: block;
+    margin: 8px 2px 0;
     font-size: 11px;
     line-height: 1.3;
+    color: #89a9cc;
   }
   .chart-scroll {
     width: 100%;

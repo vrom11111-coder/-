@@ -60,10 +60,44 @@
     });
   }
 
+  function tuneMobileCharts() {
+    if (!window.Plotly || window.innerWidth > 640) return;
+    document.querySelectorAll('.plotly-graph-div').forEach(function (plot) {
+      var update = {
+        'margin.l': 38,
+        'margin.r': 4,
+        'margin.t': 34,
+        'margin.b': 96,
+        'title.font.size': 15,
+        'font.size': 10,
+        'legend.orientation': 'h',
+        'legend.x': 0,
+        'legend.y': -0.28,
+        'legend.xanchor': 'left',
+        'legend.yanchor': 'top',
+        'legend.font.size': 10,
+        'legend.bgcolor': 'rgba(0,0,0,0)'
+      };
+      try {
+        Plotly.relayout(plot, update).then(function () {
+          Plotly.Plots.resize(plot);
+        });
+      } catch (e) {
+        try { Plotly.Plots.resize(plot); } catch (_) {}
+      }
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('table.data-table').forEach(function (t) {
       attachSort(t);
       if (t.classList.contains('searchable')) attachSearch(t);
     });
+    setTimeout(tuneMobileCharts, 150);
+    setTimeout(tuneMobileCharts, 700);
+  });
+  window.addEventListener('resize', function () {
+    clearTimeout(window.__chartTuneTimer);
+    window.__chartTuneTimer = setTimeout(tuneMobileCharts, 120);
   });
 })();
