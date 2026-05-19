@@ -164,6 +164,49 @@ a:hover { text-decoration: underline; }
 }
 
 
+/* ---------- OVERVIEW PERIOD SWITCHER ---------- */
+.overview-period-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.overview-period-card h2 { margin-bottom: 6px; }
+.overview-period-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.overview-period-btn {
+  border: 1px solid rgba(93, 124, 164, 0.72);
+  background: rgba(15, 21, 30, 0.86);
+  color: #cfe2ff;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.overview-period-btn.active {
+  background: linear-gradient(135deg, #ef6f79, #e8a14e);
+  border-color: transparent;
+  color: #10141d;
+}
+.overview-panel { display: none; }
+.overview-panel.active { display: block; }
+.info-note {
+  background: rgba(88, 166, 255, 0.08);
+  border: 1px solid rgba(88, 166, 255, 0.22);
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: #cfe2ff;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.info-note b { color: #fffaf4; }
+
 /* ---------- PAGE GUIDE ---------- */
 .page-guide {
   display: grid;
@@ -793,6 +836,26 @@ body {
   }
   .hero-chips b {
     font-size: 12px;
+  }
+  .overview-period-card {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .overview-period-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .overview-period-btn {
+    width: 100%;
+    padding: 9px 8px;
+    font-size: 12px;
+  }
+  .info-note {
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.45;
   }
   .page-guide {
     width: 100%;

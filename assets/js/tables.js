@@ -60,6 +60,28 @@
     });
   }
 
+  function attachOverviewPeriodSwitch() {
+    var buttons = document.querySelectorAll('.overview-period-btn');
+    if (!buttons.length) return;
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-period');
+        buttons.forEach(function (b) { b.classList.toggle('active', b === btn); });
+        document.querySelectorAll('.overview-panel').forEach(function (panel) {
+          panel.classList.toggle('active', panel.getAttribute('data-period') === key);
+        });
+        setTimeout(function () {
+          if (window.Plotly) {
+            document.querySelectorAll('.overview-panel.active .plotly-graph-div').forEach(function (plot) {
+              try { Plotly.Plots.resize(plot); } catch (_) {}
+            });
+          }
+          tuneMobileCharts();
+        }, 80);
+      });
+    });
+  }
+
   function tuneMobileCharts() {
     if (!window.Plotly || window.innerWidth > 640) return;
     document.querySelectorAll('.plotly-graph-div').forEach(function (plot) {
@@ -93,6 +115,7 @@
       attachSort(t);
       if (t.classList.contains('searchable')) attachSearch(t);
     });
+    attachOverviewPeriodSwitch();
     setTimeout(tuneMobileCharts, 150);
     setTimeout(tuneMobileCharts, 700);
   });
