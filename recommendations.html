@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Рекомендации — Блинная BI</title>
+<link rel="stylesheet" href="assets/css/styles.css">
+<script src="assets/js/plotly.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">⏣</span>
+      <span class="brand-text">Блинная <em>BI</em></span>
+    </div>
+    <nav class="sidebar-nav"><a class="nav-item" href="index.html"><span class="nav-icon">◆</span><span class="nav-label">Обзор</span></a><a class="nav-item" href="categories.html"><span class="nav-icon">▦</span><span class="nav-label">Категории</span></a><a class="nav-item" href="items.html"><span class="nav-icon">▤</span><span class="nav-label">Товары</span></a><a class="nav-item" href="daily.html"><span class="nav-icon">▥</span><span class="nav-label">По дням</span></a><a class="nav-item" href="food_cost.html"><span class="nav-icon">$</span><span class="nav-label">Food cost</span></a><a class="nav-item" href="abc_xyz.html"><span class="nav-icon">Σ</span><span class="nav-label">ABC / XYZ</span></a><a class="nav-item" href="trends.html"><span class="nav-icon">↗</span><span class="nav-label">Тренды</span></a><a class="nav-item active" href="recommendations.html"><span class="nav-icon">★</span><span class="nav-label">Рекомендации</span></a><a class="nav-item" href="anomalies.html"><span class="nav-icon">⚠</span><span class="nav-label">Аномалии</span></a><a class="nav-item" href="staff.html"><span class="nav-icon">♣</span><span class="nav-label">Staff</span></a><a class="nav-item" href="seasonality.html"><span class="nav-icon">☼</span><span class="nav-label">Сезонность</span></a></nav>
+    <div class="sidebar-foot">
+      <div class="ts">обновлено 19.05.2026 11:58</div>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="bc"><a href="index.html">Главная</a> <span class="bc-sep">›</span> <span class="current">Рекомендации</span></div>
+      <div class="topbar-meta"></div>
+    </header>
+    <main class="content">
+      <div class="page-head">
+        <h1>Рекомендации</h1>
+      </div>
+      <section class="card "><h2>Сводка рекомендаций</h2><div class="kpi-grid"><div class="kpi"><div class="kpi-label">Рекомендаций</div><div class="kpi-value">57</div></div><div class="kpi kpi-bad"><div class="kpi-label">Поднять цену</div><div class="kpi-value">15</div></div><div class="kpi kpi-warn"><div class="kpi-label">Убрать</div><div class="kpi-value">22</div></div><div class="kpi kpi-good"><div class="kpi-label">Продвигать</div><div class="kpi-value">10</div></div></div></section><section class="card reco-section bad"><h2>⚠ Поднять цену / пересмотреть рецепт</h2><div class="reco-list"><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Блин Царский с курицей<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 52.5 % при выручке 42 500 ₽</div>
+              <div class="reco-metrics">food cost 52.5 % · выручка 42 500 ₽ · вал 20 044 ₽ · маржа 47.2 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Блин Роял Фиш<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 60.5 % при выручке 39 900 ₽</div>
+              <div class="reco-metrics">food cost 60.5 % · выручка 39 900 ₽ · вал 15 471 ₽ · маржа 38.8 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Блин Хот-дог<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 52.0 % при выручке 29 900 ₽</div>
+              <div class="reco-metrics">food cost 52.0 % · выручка 29 900 ₽ · вал 13 857 ₽ · маржа 46.3 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Блин Большая охота<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 51.7 % при выручке 23 780 ₽</div>
+              <div class="reco-metrics">food cost 51.7 % · выручка 23 780 ₽ · вал 11 484 ₽ · маржа 48.3 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Акция недели Блин Хот-дог<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 56.1 % при выручке 15 010 ₽</div>
+              <div class="reco-metrics">food cost 56.1 % · выручка 15 010 ₽ · вал 6 595 ₽ · маржа 43.9 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Акция недели Блин Биг-Бен<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 57.6 % при выручке 12 800 ₽</div>
+              <div class="reco-metrics">food cost 57.6 % · выручка 12 800 ₽ · вал 5 423 ₽ · маржа 42.4 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Сырные палочки 6 шт<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 54.0 % при выручке 10 400 ₽</div>
+              <div class="reco-metrics">food cost 54.0 % · выручка 10 400 ₽ · вал 4 780 ₽ · маржа 46.0 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Акция недели Блин Ветчина сыр<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 50.7 % при выручке 8 550 ₽</div>
+              <div class="reco-metrics">food cost 50.7 % · выручка 8 550 ₽ · вал 4 214 ₽ · маржа 49.3 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Акция Летний шоколад<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 55.5 % при выручке 8 120 ₽</div>
+              <div class="reco-metrics">food cost 55.5 % · выручка 8 120 ₽ · вал 3 616 ₽ · маржа 44.5 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Фри комбо<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 54.7 % при выручке 7 410 ₽</div>
+              <div class="reco-metrics">food cost 54.7 % · выручка 7 410 ₽ · вал 3 357 ₽ · маржа 45.3 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Добрый 0.33л Кола ж/б<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★★</div>
+              </div>
+              <div class="reco-reason">Food cost 56.8 % при выручке 5 400 ₽</div>
+              <div class="reco-metrics">food cost 56.8 % · выручка 5 400 ₽ · вал 2 336 ₽ · маржа 43.2 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Акция Блин Биг-Бен<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Food cost 63.6 % при выручке 5 000 ₽</div>
+              <div class="reco-metrics">food cost 63.6 % · выручка 5 000 ₽ · вал 0 ₽ · маржа 0.0 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Акция Блин Воевода<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Food cost 53.3 % при выручке 4 180 ₽</div>
+              <div class="reco-metrics">food cost 53.3 % · выручка 4 180 ₽ · вал 1 952 ₽ · маржа 46.7 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Сытное комбо<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Food cost 57.7 % при выручке 3 520 ₽</div>
+              <div class="reco-metrics">food cost 57.7 % · выручка 3 520 ₽ · вал 1 488 ₽ · маржа 42.3 %</div>
+            </div><div class="reco bad">
+              <div class="reco-head">
+                <div class="reco-target">Чай фруктовый<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Food cost 57.8 % при выручке 3 400 ₽</div>
+              <div class="reco-metrics">food cost 57.8 % · выручка 3 400 ₽ · вал 1 433 ₽ · маржа 42.2 %</div>
+            </div></div></section><section class="card reco-section warn"><h2>Убрать позицию</h2><div class="reco-list"><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">0,2л &quot;IL PRIMO&quot; вишня<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 3 дн.  вал 158 ₽</div>
+              <div class="reco-metrics">days_sold: 3 · вал 158 ₽ · abc_xyz: CX</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Сыр Чеддер<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 3 дн.  вал 164 ₽</div>
+              <div class="reco-metrics">days_sold: 3 · вал 164 ₽ · abc_xyz: CX</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Клубничный конфитюр 30 мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 198 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 198 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Мокачино 150 мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 2 дн.  вал 108 ₽</div>
+              <div class="reco-metrics">days_sold: 2 · вал 108 ₽ · abc_xyz: CX</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">раф 250 мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 2 дн.  вал 124 ₽</div>
+              <div class="reco-metrics">days_sold: 2 · вал 124 ₽ · abc_xyz: CX</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Кокосовый раф 250 мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 120 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 120 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">0,2л &quot;IL PRIMO&quot;  яблоко<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 104 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 104 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Добрый 0.33л Апельс. Вит С Сс 12Х ж/б<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 2 дн.  вал 86 ₽</div>
+              <div class="reco-metrics">days_sold: 2 · вал 86 ₽ · abc_xyz: CX</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Добрый 0.33л Лимон. ж/б<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 2 дн.  вал 86 ₽</div>
+              <div class="reco-metrics">days_sold: 2 · вал 86 ₽ · abc_xyz: CX</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Добрый 0.33л Лайм ж/б<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 86 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 86 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">0,2л &quot;IL PRIMO&quot; МАНГО<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 2 дн.  вал 96 ₽</div>
+              <div class="reco-metrics">days_sold: 2 · вал 96 ₽ · abc_xyz: CX</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">0,2л &quot;IL PRIMO&quot; сок яблочный 8<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 107 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 107 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Шоколад 150 мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 61 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 61 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Кокосовый раф 150мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 180 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 180 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Лимонад Тропик<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 94 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 94 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Блин творог-яблоко<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 115 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 115 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Блин Творог Груша<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 111 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 111 ₽ · abc_xyz: CZ</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Бекон 30 грамм<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 2 дн.  вал 105 ₽</div>
+              <div class="reco-metrics">days_sold: 2 · вал 105 ₽ · abc_xyz: CX</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Колбаски охотничьи 30 грамм<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 2 дн.  вал 74 ₽</div>
+              <div class="reco-metrics">days_sold: 2 · вал 74 ₽ · abc_xyz: CX</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Ирландские сливки 250 мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">C-класс  продавался 1 дн.  вал 70 ₽</div>
+              <div class="reco-metrics">days_sold: 1 · вал 70 ₽ · abc_xyz: CZ</div>
+            </div></div></section><section class="card reco-section warn"><h2>Мёртвые позиции (ни одной продажи)</h2><div class="reco-list"><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">колво чеков<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Не продавался ни в один день периода</div>
+              <div class="reco-metrics">days_sold: 0</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">разница 37 руб<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Не продавался ни в один день периода</div>
+              <div class="reco-metrics">days_sold: 0</div>
+            </div></div></section><section class="card reco-section good"><h2>★ Продвигать</h2><div class="reco-list"><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Летний клубника<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 60 %, рост на 642 % к концу периода</div>
+              <div class="reco-metrics">маржа 60.1 % · Δ 641.9 % · выручка 4 420 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Лимонад Мохито<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 64 %, рост на 190 % к концу периода</div>
+              <div class="reco-metrics">маржа 64.0 % · Δ 190.3 % · выручка 3 400 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Буженина 30 грамм<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 76 %, рост на 190 % к концу периода</div>
+              <div class="reco-metrics">маржа 76.1 % · Δ 190.3 % · выручка 560 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Кетчуп<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 73 %, рост на 124 % к концу периода</div>
+              <div class="reco-metrics">маржа 72.7 % · Δ 123.8 % · выручка 2 120 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Капучино 350 мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 70 %, рост на 94 % к концу периода</div>
+              <div class="reco-metrics">маржа 69.9 % · Δ 93.5 % · выручка 9 240 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Молочный коктейль теплый<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 60 %, рост на 80 % к концу периода</div>
+              <div class="reco-metrics">маржа 60.3 % · Δ 79.7 % · выручка 16 000 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Соус Белый 30 грамм<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 85 %, рост на 69 % к концу периода</div>
+              <div class="reco-metrics">маржа 85.3 % · Δ 69.4 % · выручка 1 320 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Блин Жульен<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 68 %, рост на 66 % к концу периода</div>
+              <div class="reco-metrics">маржа 68.1 % · Δ 65.9 % · выручка 47 500 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Лук Ялта 30 гр<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 87 %, рост на 65 % к концу периода</div>
+              <div class="reco-metrics">маржа 86.8 % · Δ 64.5 % · выручка 810 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Соус Чесночный<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Маржа 68 %, рост на 40 % к концу периода</div>
+              <div class="reco-metrics">маржа 67.6 % · Δ 40.5 % · выручка 3 040 ₽</div>
+            </div></div></section><section class="card reco-section good"><h2>Возможно недооценённые</h2><div class="reco-list"><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Кокосовый раф 150мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">Высокая маржа 100 %  но низкая выручка 180 ₽</div>
+              <div class="reco-metrics">маржа 100.0 % · выручка 180 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Соус кисло-сладкий<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">Высокая маржа 96 %  но низкая выручка 40 ₽</div>
+              <div class="reco-metrics">маржа 95.6 % · выручка 40 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Лук Ялта 30 гр<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">Высокая маржа 87 %  но низкая выручка 810 ₽</div>
+              <div class="reco-metrics">маржа 86.8 % · выручка 810 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Клубника конфитюр, 50 мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">Высокая маржа 86 %  но низкая выручка 50 ₽</div>
+              <div class="reco-metrics">маржа 85.8 % · выручка 50 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Сладкий чили<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">Высокая маржа 84 %  но низкая выручка 720 ₽</div>
+              <div class="reco-metrics">маржа 84.3 % · выручка 720 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Клубника конфитюр 30гр<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">Высокая маржа 82 %  но низкая выручка 80 ₽</div>
+              <div class="reco-metrics">маржа 82.4 % · выручка 80 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Клубничный конфитюр 30 мл<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">Высокая маржа 82 %  но низкая выручка 240 ₽</div>
+              <div class="reco-metrics">маржа 82.4 % · выручка 240 ₽</div>
+            </div><div class="reco good">
+              <div class="reco-head">
+                <div class="reco-target">Груша конфитюр 30 гр<span class="reco-targettype">item</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">Высокая маржа 81 %  но низкая выручка 80 ₽</div>
+              <div class="reco-metrics">маржа 80.9 % · выручка 80 ₽</div>
+            </div></div></section><section class="card reco-section bad"><h2>Категории с проблемным food cost</h2><div class="reco-list"><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Сытные<span class="reco-targettype">category</span></div>
+                <div class="reco-confidence" title="confidence">★★★★☆</div>
+              </div>
+              <div class="reco-reason">Food cost 45.4 % при доле 60.6 % от выручки</div>
+              <div class="reco-metrics">food cost 45.4 % · revenue_share: 0.6059956298140307</div>
+            </div><div class="reco warn">
+              <div class="reco-head">
+                <div class="reco-target">Комбо<span class="reco-targettype">category</span></div>
+                <div class="reco-confidence" title="confidence">★★★☆☆</div>
+              </div>
+              <div class="reco-reason">Food cost 48.3 % при доле 1.6 % от выручки</div>
+              <div class="reco-metrics">food cost 48.3 % · revenue_share: 0.016379832905338676</div>
+            </div></div></section>
+    </main>
+  </div>
+</div>
+<script src="assets/js/tables.js"></script>
+</body>
+</html>
